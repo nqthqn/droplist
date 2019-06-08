@@ -31,7 +31,7 @@ func renderList() {
 	dropletList, _ := dropletList(client)
 
 	systray.SetTitle("💧")
-	systray.SetTooltip("You have " + strconv.Itoa(len(dropletList)) + " droplets")
+	systray.SetTooltip("You have " + strconv.Itoa(len(dropletList)) + " droplet(s)")
 	mItem, dropletURL := getDropletMenuItem(dropletList[0])
 
 	for {
