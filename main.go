@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -21,7 +22,7 @@ type tokenSource struct {
 }
 
 func main() {
-	systray.Run(renderList)
+	systray.Run(renderList, func() { fmt.Println("Goodbye.") })
 }
 
 func renderList() {
@@ -80,9 +81,10 @@ func getFlagByRegionSlug(region string) string {
 func dropletList(client *godo.Client) ([]godo.Droplet, error) {
 	list := []godo.Droplet{}
 	opt := &godo.ListOptions{}
-
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	for {
-		droplets, resp, err := client.Droplets.List(opt)
+		droplets, resp, err := client.Droplets.List(ctx, opt)
 		if err != nil {
 			return nil, err
 		}
