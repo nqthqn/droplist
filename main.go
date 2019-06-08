@@ -3,18 +3,20 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"strconv"
+	"time"
+
 	"github.com/digitalocean/godo"
 	"github.com/getlantern/systray"
 	"github.com/skratchdot/open-golang/open"
 	"golang.org/x/oauth2"
-	"os"
-	"strconv"
 )
 
-type Configuration struct {
+type configuration struct {
 	PersonalAccessToken string
 }
-type TokenSource struct {
+type tokenSource struct {
 	AccessToken string
 }
 
@@ -25,16 +27,16 @@ func main() {
 func renderList() {
 	PAT := getTokenFromFile()
 	client := authenticateClient(PAT)
-	dropletList, _ := DropletList(client)
+	dropletList, _ := dropletList(client)
 
 	systray.SetTitle("Droplets")
 	systray.SetTooltip("You have " + strconv.Itoa(len(dropletList)) + " droplets")
-	mItem, dropletUrl := getDropletMenuItem(dropletList[0])
+	mItem, dropletURL := getDropletMenuItem(dropletList[0])
 
 	for {
 		select {
 		case <-mItem.ClickedCh:
-			open.Run(dropletUrl)
+			open.Run(dropletURL)
 		}
 	}
 }
@@ -75,7 +77,7 @@ func getFlagByRegionSlug(region string) string {
 	return flags[country]
 }
 
-func DropletList(client *godo.Client) ([]godo.Droplet, error) {
+func dropletList(client *godo.Client) ([]godo.Droplet, error) {
 	list := []godo.Droplet{}
 	opt := &godo.ListOptions{}
 
@@ -109,20 +111,24 @@ func DropletList(client *godo.Client) ([]godo.Droplet, error) {
  */
 func getTokenFromFile() string {
 	// Get PersonalAccessToken from config file
-	file, _ := os.Open("config.json")
-	decoder := json.NewDecoder(file)
-	config := Configuration{}
-	err := decoder.Decode(&config)
-
+	file, err := os.Open("config.json")
 	if err != nil {
-		fmt.Println("error", err)
+		fmt.Println("could not open config.json:", err)
+		os.Exit(1)
+	}
+	decoder := json.NewDecoder(file)
+	config := configuration{}
+	err = decoder.Decode(&config)
+	if err != nil {
+		fmt.Println("could not parse config.json:", err)
+		os.Exit(1)
 	}
 
 	return config.PersonalAccessToken
 }
 
 func authenticateClient(accessToken string) (client *godo.Client) {
-	tokenSource := &TokenSource{
+	tokenSource := &tokenSource{
 		AccessToken: accessToken,
 	}
 	oauthClient := oauth2.NewClient(oauth2.NoContext, tokenSource)
@@ -130,7 +136,7 @@ func authenticateClient(accessToken string) (client *godo.Client) {
 	return
 }
 
-func (t *TokenSource) Token() (*oauth2.Token, error) {
+func (t *tokenSource) Token() (*oauth2.Token, error) {
 	token := &oauth2.Token{
 		AccessToken: t.AccessToken,
 	}
