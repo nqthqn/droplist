@@ -30,7 +30,7 @@ func renderList() {
 	client := authenticateClient(PAT)
 	dropletList, _ := dropletList(client)
 
-	systray.SetTitle("Droplets")
+	systray.SetTitle("💧")
 	systray.SetTooltip("You have " + strconv.Itoa(len(dropletList)) + " droplets")
 	mItem, dropletURL := getDropletMenuItem(dropletList[0])
 
